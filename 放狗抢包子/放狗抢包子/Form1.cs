@@ -1,3 +1,5 @@
+using System.Diagnostics;
+
 namespace 放狗抢包子
 {
     public partial class Form1 : Form
@@ -28,26 +30,80 @@ namespace 放狗抢包子
             for (int i = 0; i < 3; i++)
             {
                 //一条线程代表一条狗，其下标i正好是对应的
-                threads[i] = new Thread((num) =>
+                threads[i] = new Thread((obj) =>
                 {
-                    while (BunNum > 0)
+                    bool isRunning = true;
+                    while (isRunning)
                     {
-                        this.Invoke(new Action(() =>
+                        string name = Thread.CurrentThread.Name;
+                        //lock (obj)
+                        //{
+                        try
                         {
-                            BunNum--;
-                            var dog = Controls["dog" + num] as Dog;
-                            if (dog != null)
+                            Monitor.Enter(obj);
+                            if (BunNum <= 0)
                             {
-                                dog.BunNum++;
+                                Monitor.Exit(obj);
+                                break;
                             }
-                        }));
-
-                        Thread.Sleep(20);
+                            this.Invoke(new Action(() =>
+                            {
+                                BunNum--;
+                                var dog = Controls["dog" + name] as Dog;
+                                if (dog != null)
+                                {
+                                    dog.BunNum++;
+                                }
+                            }));
+                            //System.Diagnostics.Debug.WriteLine($"Thread[{name}]:current bun num:{BunNum}");
+                            //}
+                            Monitor.Exit(obj);
+                            Thread.Sleep(100);
+                        }
+                        catch (Exception)
+                        {
+                            if (Monitor.IsEntered(obj))
+                            {
+                                Monitor.Exit(obj);
+                            }
+                            isRunning = false;
+                        }
                     }
                 });
-                threads[i].Start(i+1);
+                threads[i].Name = (i + 1).ToString();
+                threads[i].Start(lockobj);
             }
         }
 
+        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            //foreach (var t in threads)
+            //{
+            //    System.Diagnostics.Debug.WriteLine($"name:{t.Name} state:{t.ThreadState}");
+            //}
+
+            //while (true)
+            //{
+            //    Application.DoEvents();
+
+            //    bool allDone = true;
+            //    foreach (var t in threads)
+            //    {
+            //        if ((t.ThreadState & System.Threading.ThreadState.Stopped) != System.Threading.ThreadState.Stopped)
+            //        {
+            //            allDone = false;
+            //        }
+            //    }
+
+            //    if (allDone)
+            //    {
+            //        break;
+            //    }
+
+            //    Thread.Sleep(30);
+            //}
+
+            
+        }
     }
 }
