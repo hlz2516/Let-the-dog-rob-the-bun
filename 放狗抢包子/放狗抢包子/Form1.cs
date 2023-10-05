@@ -6,6 +6,7 @@ namespace 放狗抢包子
     {
         private int bunNum;
         private static readonly object lockobj = new object();
+        private static bool IsClosing = false;
 
         public int BunNum
         {
@@ -50,14 +51,17 @@ namespace 放狗抢包子
                             {
                                 BunNum--;
                                 var dog = Controls["dog" + name] as Dog;
-                                if (dog != null)
-                                {
-                                    dog.BunNum++;
-                                }
+                                dog.BunNum++;
                             }));
                             //System.Diagnostics.Debug.WriteLine($"Thread[{name}]:current bun num:{BunNum}");
                             //}
                             Monitor.Exit(obj);
+
+                            if (IsClosing)
+                            {
+                                break;
+                            }
+
                             Thread.Sleep(100);
                         }
                         catch (Exception)
@@ -77,33 +81,27 @@ namespace 放狗抢包子
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            //foreach (var t in threads)
-            //{
-            //    System.Diagnostics.Debug.WriteLine($"name:{t.Name} state:{t.ThreadState}");
-            //}
+            while (true)
+            {
+                Application.DoEvents();
+                IsClosing = true;
+                bool allDone = true;
+                foreach (var t in threads)
+                {
+                    if ((t.ThreadState & System.Threading.ThreadState.Stopped) != System.Threading.ThreadState.Stopped)
+                    {
+                        allDone = false;
+                        break;
+                    }
+                }
 
-            //while (true)
-            //{
-            //    Application.DoEvents();
+                if (allDone)
+                {
+                    break;
+                }
 
-            //    bool allDone = true;
-            //    foreach (var t in threads)
-            //    {
-            //        if ((t.ThreadState & System.Threading.ThreadState.Stopped) != System.Threading.ThreadState.Stopped)
-            //        {
-            //            allDone = false;
-            //        }
-            //    }
-
-            //    if (allDone)
-            //    {
-            //        break;
-            //    }
-
-            //    Thread.Sleep(30);
-            //}
-
-            
+                Thread.Sleep(30);
+            }
         }
     }
 }
