@@ -5,13 +5,16 @@ namespace 放狗抢包子
     /// <summary>
     /// 该示例模拟：
     /// 点击“开始抢包子”后，三只狗（其实是线程）开始争抢同一笼里的包子（共享变量），
-    /// 直至包子被抢完（共享变量变为0），线程终止。
+    /// 狗的逻辑：只要笼子里还有包子，就争抢。
+    /// 可以通过“开始放包子”按钮来添加笼里的包子数量。
     /// </summary>
-    public partial class Form1 : Form
+    public partial class Form3_NoLimitBun : Form
     {
         private int bunNum;
         private static readonly object lockobj = new object();
         private static bool IsClosing = false;
+        private Thread PushBuns;
+        private bool continuePush;
 
         public int BunNum
         {
@@ -23,10 +26,27 @@ namespace 放狗抢包子
             }
         }
 
-        public Form1()
+        public Form3_NoLimitBun()
         {
             InitializeComponent();
             BunNum = 200;
+            PushBuns = new Thread(() =>
+            {
+                while (true)
+                {
+                    //每隔一秒钟放一个包子
+                    if (continuePush)
+                    {
+                        this?.Invoke(new Action(() => 
+                        {
+                            BunNum++;
+                        }));
+                    }
+                    Thread.Sleep(100);
+                }
+            });
+            PushBuns.IsBackground = true;
+            PushBuns.Start();
         }
 
         private Thread[] threads = new Thread[3];
@@ -50,7 +70,12 @@ namespace 放狗抢包子
                             if (BunNum <= 0)
                             {
                                 Monitor.Exit(obj);
-                                break;
+                                Thread.Sleep(200);
+                                if (IsClosing)
+                                {
+                                    break;
+                                }
+                                continue;
                             }
                             this.Invoke(new Action(() =>
                             {
@@ -67,7 +92,7 @@ namespace 放狗抢包子
                                 break;
                             }
 
-                            Thread.Sleep(100);
+                            Thread.Sleep(200);
                         }
                         catch (Exception)
                         {
@@ -113,6 +138,16 @@ namespace 放狗抢包子
 
                 Thread.Sleep(30);
             }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            continuePush = true;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            continuePush = false;
         }
     }
 }

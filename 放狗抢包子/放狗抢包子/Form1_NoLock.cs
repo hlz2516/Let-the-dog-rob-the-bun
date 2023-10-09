@@ -37,20 +37,17 @@ namespace 放狗抢包子
                     {
                         try
                         {
-                            lock (obj)
+                            if (BunNum <= 0)
                             {
-                                if (BunNum <= 0)
-                                {
-                                    break;
-                                }
-                                this.Invoke(new Action(() =>
-                                {
-                                    BunNum--;
-                                    var dog = Controls["dog" + name] as Dog;
-                                    dog.BunNum++;
-                                }));
-                                //System.Diagnostics.Debug.WriteLine($"Thread[{name}]:current bun num:{BunNum}");
+                                break;
                             }
+                            this.Invoke(new Action(() =>
+                            {
+                                BunNum--;
+                                var dog = Controls["dog" + name] as Dog;
+                                dog.BunNum++;
+                            }));
+                            //System.Diagnostics.Debug.WriteLine($"Thread[{name}]:current bun num:{BunNum}");
                             Thread.Sleep(100);
                         }
                         catch (Exception ex)

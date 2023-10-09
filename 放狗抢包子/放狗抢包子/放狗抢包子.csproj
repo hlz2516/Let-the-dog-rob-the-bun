@@ -9,6 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Update="Form3_NoLimitBun.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Form1_NoLock.cs">
       <SubType>Form</SubType>
     </Compile>
